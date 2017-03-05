@@ -12,7 +12,7 @@ module HW_int
 	using Distributions
 	using LaTeXStrings
 
-	# here are some functions I defined for useage
+	# here are some functions I defined for usage
 	# in several sub questions
 
 	# demand function
