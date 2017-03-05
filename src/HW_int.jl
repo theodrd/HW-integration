@@ -159,27 +159,24 @@ module HW_int
 	"""
 	function show_sol_1(n,p)
 
-
+		q(y)			= 2 * y^(-0.5)
 		x 				= linspace(5e-1, 5, 300)
 		X_gauss 	= question_1b(n,p)
 		X_monte		= question_1c(n,p)
 		X_quasi		= question_1d(n,p)
 
-		q(y)			= 2 * y^(-0.5)
+		plot1			= plot(x, q, xlab = L"p", ylab = L"q(p)", title = "Gauss-Legendre")
+		vline!(p, line = 2)
+		scatter!(X_gauss, q)
+		plot2			= plot(x, q, xlab = L"p", ylab = L"q(p)", title = "Monte Carlo")
+		vline!(p, line = 2)
+		scatter!(X_monte, q)
+		plot3			= plot(x, q, xlab = L"p", ylab = L"q(p)", title = "Quasi Monte Carlo")
+		vline!(p, line = 2)
+		scatter!(X_quasi, q)
+
 		l 				= @layout [a b; c]
-		return plot(
-			plot(x, q, xlab = L"p", ylab = L"q(p)", title = "Gauss-Legendre"),
-			vline!(p, line = 2),
-			scatter!(X_gauss, q),
-			plot(x, q, xlab = L"p", ylab = L"q(p)", title = "Monte Carlo"), 
-			vline!(p, line = 2),
-			scatter!(X_monte, q),
-			plot(x, q, xlab = L"p", ylab = L"q(p)", title = "Quasi Monte Carlo"),
-			vline!(p, line = 2),
-			scatter!(X_quasi, q),
-			# title = "Integral approximation"
-			layout = l
-		)
+		return plot(plot1, plot2, plot3, layout = l)
 
 	end
 
