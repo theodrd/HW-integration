@@ -1,23 +1,13 @@
 module HW_int
 
 
-	# question 1 b)
-	# here are the packages I used
-
 	using FastGaussQuadrature
-	using Roots
 	using Sobol
 	using Plots
-	using Distributions
 	using LaTeXStrings
 
-
-	# here are some functions I defined for useage in several sub questions:
-
 	# demand function
-    q(y) = 2*y^(-0.5)
-
-	# integration function
+  q(y) = 2*y^(-0.5)
 
   """
   Numerical integration of functions in one dimension
@@ -106,13 +96,6 @@ module HW_int
       return S, X
 
   end
-
-	# eqm condition for question 2
-	# this is the equilibrium condition: total demand = supply,
-
-
-	# weighted sum for integration from the slides.
-
 
   """
   Answer Question 1)a) of the homework
@@ -230,37 +213,142 @@ module HW_int
 
   end
 
+	### Exercice 2
 
+	# Price equation, sol
+	p(o1, o2) 	= (1/8) * (4 * o1 + o2 * (o2 + (8 * o1 + o2 * o2)^(0.5)))
 
+	"""
+	Answer Question 2)a) of the homework (Gauss-Hermite approximation of expected
+	price and variance)
 
+	#### Fields
 
+	- `n::Integer` : Number of points for the numerical integration
+	- `mu::Array{Float64,2}` : Mean vector of the log-normal distribution
+	- `sig::Array{Float64,2}` : Variance-covariance matrix of the log-normal distribution
+	- `verbose::Bool`: Add comment (true by default)
 
+	#### Returns
 
+	The expected price and variance.
+	"""
+	function question_2a(n::Integer, mu::Array{Float64}, sig::Array{Float64}; verbose::Bool=true)
+		rule 		= gausshermite(n)
+		ome 		= chol(sig)
+		nodes 	= [rule[1] rule[1]]
+		# nodes		= nodes * ome - kron(mu,ones(n,1))
+		nodes 	= (ome * nodes')' - kron(mu,ones(n,1))
+		o1,o2		= nodes[:,1], nodes[:,2]
+		o1,o2		= exp(o1), exp(o2)
+		w1 = w2 = rule[2] / sqrt(pi)
 
-	function question_2a(n)
+		E 				= 0
+		V					= 0
+		for (i, x) in enumerate(o1)
+			for (j, y) in enumerate(o2)
+					E 	+= w1[i] * w2[j] * p(x, y)
+					V		+= w1[i] * w2[j] * p(x, y) * p(x, y)
+			end
+		end
+		V					-= E^2
 
+		if verbose
+			println("Gauss-Hermite integration with $n points yields \n Expectation : ", E, "\n Variance : ", V)
+		end
+
+		return E, V
 	end
 
+	"""
+	Answer Question 2)b) of the homework (Monte Carlo approximation of expected
+	price and variance)
 
-	function question_2b(n)
+	#### Fields
 
+	- `n::Integer` : Number of points for the numerical integration
+	- `mu::Array{Float64,2}` : Mean vector of the log-normal distribution
+	- `sig::Array{Float64,2}` : Variance-covariance matrix of the log-normal distribution
+	- `verbose::Bool`: Add comment (true by default)
+
+	#### Returns
+
+	The expected price and variance.
+	"""
+	function question_2b(n::Integer, mu::Array{Float64,2}, sig::Array{Float64,2};verbose::Bool=true)
+		# draw n observations from a bivariate normal distribution, and turn them into log-normal nodes
+		X				= mu .+ (randn(2,n)' * chol(sig))
+		X				= exp(X)
+
+		E 			= 0
+		V				= 0
+		for xi in X[:,1]
+			for xj in X[:,2]
+				E 	+= p(xi, xj)
+				V		+= p(xi, xj) * p(xi, xj)
+			end
+		end
+		E				*= 1/(n * n)
+		V				*= 1/(n * n)
+		V				-= E^2
+
+		if verbose
+			println("Monte carlo integration with $n points yields \n Expectation : ", E, "\n Variance : ", V)
+		end
+
+		return E, V
 	end
 
+	"""
+	Display the solutions of question 2.
+
+	#### Fields
+
+	- `N::StepRange{Int64,Int64}` : Number of points for the numerical integration
+	- `mu::Array{Float64,2}` : Mean vector of the log-normal distribution
+	- `sig::Array{Float64,2}` : Variance-covariance matrix of the log-normal distribution
+
+	#### Returns
+
+	Returns the approximation of the integral and a plot comparing the three methods.
+	"""
+	function show_sol_2(;N::StepRange{Int64,Int64}=10:50:1000, mu = [0. 0.], sig = [.02 .01;.01 .01])
+
+		# Integral approximate value for different n and the two different methods
+    mat_E 			= [[question_2a(i, mu, sig; verbose = false)[1] for i in N],
+    							[question_2b(i, mu, sig; verbose = false)[1] for i in N]]
+		mat_V 			= [[question_2a(i, mu, sig; verbose = false)[2] for i in N],
+    							[question_2b(i, mu, sig; verbose = false)[2] for i in N]]
+
+    plot1				= plot(N, mat_E, xlab = L"n", ylab = L"\mathbb{E}(p)", title="Numerical integration",
+                    label=["Gauss-Hermite" "Monte-Carlo"], line = 2)
+		plot2				= plot(N, mat_V, xlab = L"n", ylab = L"\mathbb{V}(p)", title="Numerical integration",
+	                  label=["Gauss-Hermite" "Monte-Carlo"], line = 2)
+		l 					= @layout [a; b]
+		return plot(plot1, plot2, layout = l)
+	end
 
 	# function to run all questions
-	function runall(n=10, p=[1,4])
+	function runall(n=10, p=[1,4], mu=[0. 0.], sig=[0.02 0.01; 0.01 0.01],show_sol::Integer=1)
 		println("running all questions of HW-integration:")
 		println("results of question 1:")
-		question_1b(n, p)	# make sure your function prints some kind of result!
+		question_1b(n, p)
 		question_1c(n, p)
 		question_1d(n, p)
-		return show_sol_1()
+		if show_sol == 1
+			plot = show_sol_1()
+		end
 		println("")
 		println("results of question 2:")
-		q2 = question_2a(n)
-		println(q2)
-		q2b = question_2b(n)
-		println(q2b)
+		question_2a(n,mu,sig)
+		question_2b(n,mu,sig)
+		if show_sol == 2
+			println("Careful, plotting the solution of question 2 takes time")
+			plot = show_sol_2()
+		end
+		println("")
+		println("Comparison of the integration method for question $show_sol")
+		return plot
 		println("end of HW-integration")
 	end
 
