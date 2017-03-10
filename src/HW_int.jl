@@ -187,9 +187,9 @@ module HW_int
 	function show_sol_1(;N::StepRange{Int64,Int64}=10:1000:10010,p = [1,4])
 
 		x 				= linspace(5e-1, 5, 300)
-		X_gauss 	= question_1b(N[1],p)[2]
-		X_monte		= question_1c(N[1],p)[2]
-		X_quasi		= question_1d(N[1],p)[2]
+		X_gauss 	= integrate(q, p, "gauss-legendre";n = N[1], verbose = false)[2]
+		X_monte		= integrate(q, p, "monte-carlo"; n = N[1], verbose = false)[2]
+		X_quasi		= integrate(q, p, "quasi-monte-carlo"; n = N[1], verbose = false)[2]
 
 		plot1			= plot(x, q, xlab = L"p", ylab = L"q(p)", title = "Gauss-Legendre")
 		vline!(p, line = 2)
@@ -329,26 +329,53 @@ module HW_int
 	end
 
 	# function to run all questions
-	function runall(n=10, p=[1,4], mu=[0. 0.], sig=[0.02 0.01; 0.01 0.01],show_sol::Integer=1)
+
+    """
+	Display the solutions of question 2.
+
+	#### Fields
+
+	- `n::Integer` : Number of points for the numerical integration
+	- `p::Array{Float64}(2)` : Array containing the original and the new price.
+	- `mu::Array{Float64,2}` : Mean vector of the log-normal distribution
+	- `sig::Array{Float64,2}` : Variance-covariance matrix of the log-normal distribution
+	- `N::Integer` : take value 1 or 2 or 12; if 1 displays the plots for the solution of question 1,
+    if 2 displays the plots for the solution of question 2, if 12 displays the plots for the solution of question 1 and 2
+
+	#### Returns
+
+	Returns plots to compare the integration methods and print the solutions to the questions. 
+	"""
+	function runall(;n=10, p=[1,4], mu=[0. 0.], sig=[0.02 0.01; 0.01 0.01],show_sol::Integer=12)
 		println("running all questions of HW-integration:")
 		println("results of question 1:")
 		question_1b(n, p)
 		question_1c(n, p)
 		question_1d(n, p)
-		if show_sol == 1
-			plot = show_sol_1()
+		if show_sol == 1 || show_sol == 12
+			plot1 = show_sol_1()
 		end
 		println("")
 		println("results of question 2:")
 		question_2a(n,mu,sig)
 		question_2b(n,mu,sig)
-		if show_sol == 2
+		if show_sol == 2 || show_sol == 12
 			println("Careful, plotting the solution of question 2 takes time")
-			plot = show_sol_2()
+			plot2 = show_sol_2()
 		end
 		println("")
 		println("Comparison of the integration method for question $show_sol")
-		return plot
+    
+        if show_sol == 12
+            return plot(plot1, plot2)
+        elseif show_sol == 1
+            return plot1
+        elseif show_sol == 2
+            return plot2
+        else
+            println("No question $show_sol")
+        end
+        
 		println("end of HW-integration")
 	end
 
