@@ -344,9 +344,9 @@ module HW_int
 
 	#### Returns
 
-	Returns plots to compare the integration methods and print the solutions to the questions. 
+	Returns plots to compare the integration methods and print the solutions to the questions.
 	"""
-	function runall(;n=10, p=[1,4], mu=[0. 0.], sig=[0.02 0.01; 0.01 0.01],show_sol::Integer=12)
+	function runall(;n=10, p=[1,4], mu=[0. 0.], sig=[0.02 0.01; 0.01 0.01],show_sol::Integer=1)
 		println("running all questions of HW-integration:")
 		println("results of question 1:")
 		question_1b(n, p)
@@ -365,7 +365,7 @@ module HW_int
 		end
 		println("")
 		println("Comparison of the integration method for question $show_sol")
-    
+
         if show_sol == 12
             return plot(plot1, plot2)
         elseif show_sol == 1
@@ -375,7 +375,7 @@ module HW_int
         else
             println("No question $show_sol")
         end
-        
+
 		println("end of HW-integration")
 	end
 
